@@ -2,6 +2,10 @@
 {
     public class TwitterService : BaseService
     {
+        public TwitterService() {
+            
+        }
+
 
     }
 }
