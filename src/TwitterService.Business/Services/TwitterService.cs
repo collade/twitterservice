@@ -16,7 +16,6 @@
             IEntityRepository<Keyword> keywordRepository,
             IEntityRepository<DistinctKeyword> distinctKeywordRepository)
         {
-
             this.organizationRepository = organizationRepository;
             this.keywordRepository = keywordRepository;
             this.distinctKeywordRepository = distinctKeywordRepository;
@@ -34,7 +33,7 @@
                 return false;
             }
 
-            if (!HasOrganization(organizationId))
+            if (HasOrganization(organizationId))
             {
                 return false;
             }
