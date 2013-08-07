@@ -44,6 +44,7 @@
       <HintPath>..\..\packages\NUnit.2.6.2\lib\nunit.framework.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -61,12 +62,14 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>AddingKeywords.feature</DependentUpon>
     </Compile>
-    <Compile Include="DisablingKeywords.feature.cs">
+    <Compile Include="RemovingKeywords.cs" />
+    <Compile Include="RemovingKeywords.feature.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
-      <DependentUpon>DisablingKeywords.feature</DependentUpon>
+      <DependentUpon>RemovingKeywords.feature</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SpecSetup.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="AddingKeywords.feature">
@@ -74,9 +77,9 @@
       <LastGenOutput>AddingKeywords.feature.cs</LastGenOutput>
     </None>
     <None Include="App.config" />
-    <None Include="DisablingKeywords.feature">
+    <None Include="RemovingKeywords.feature">
       <Generator>SpecFlowSingleFileGenerator</Generator>
-      <LastGenOutput>DisablingKeywords.feature.cs</LastGenOutput>
+      <LastGenOutput>RemovingKeywords.feature.cs</LastGenOutput>
     </None>
     <None Include="packages.config">
       <SubType>Designer</SubType>

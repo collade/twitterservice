@@ -1,12 +1,14 @@
 ﻿namespace TwitterService.Business.Services
 {
+    using System;
     using System.Linq;
+
+    using MongoDB.Driver.Builders;
 
     using global::TwitterService.Business.Entities;
     using global::TwitterService.Business.Repos;
 
-    public class TwitterService : BaseService
-    {
+    public class TwitterService : BaseService, ITwitterService {
         private readonly IEntityRepository<Organization> organizationRepository;
         private readonly IEntityRepository<Keyword> keywordRepository;
         private readonly IEntityRepository<DistinctKeyword> distinctKeywordRepository;
@@ -26,6 +28,16 @@
             return organizationRepository.AsQueryable().Any(x => x.OrganizationId == organizationId);
         }
 
+        public bool HasKeywordForOrganization(string organizationId, string keyword)
+        {
+            return keywordRepository.AsQueryable().Any(x => x.OrganizationId == organizationId && x.Key == keyword);
+        }
+
+        public bool HasDistinctKeyword(string keyword)
+        {
+            return distinctKeywordRepository.AsQueryable().Any(x => x.Key == keyword);
+        }
+
         public bool AddOrganization(string organizationId)
         {
             if (string.IsNullOrEmpty(organizationId))
@@ -43,16 +55,6 @@
                     new Organization { CreatedBy = "System", UpdatedBy = "System", OrganizationId = organizationId });
 
             return result.Ok;
-        }
-
-        public bool HasKeywordForOrganization(string organizationId, string keyword)
-        {
-            return keywordRepository.AsQueryable().Any(x => x.OrganizationId == organizationId && x.Key == keyword);
-        }
-
-        public bool HasDistinctKeyword(string keyword)
-        {
-            return distinctKeywordRepository.AsQueryable().Any(x => x.Key == keyword);
         }
 
         public bool AddKeyword(string organizationId, string keyword)
@@ -99,6 +101,61 @@
                     }
 
                     return true;
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool RemoveKeyword(string organizationId, string keyword)
+        {
+
+            if (string.IsNullOrEmpty(organizationId) ||
+                string.IsNullOrEmpty(keyword))
+            {
+                return false;
+            }
+
+            if (!HasOrganization(organizationId))
+            {
+                return false;
+            }
+
+            if (!HasKeywordForOrganization(organizationId, keyword))
+            {
+                return false;
+            }
+
+            var result =
+                keywordRepository.Update(
+                    Query.And(
+                        Query<Keyword>.EQ(x => x.Key, keyword),
+                        Query<Keyword>.EQ(x => x.OrganizationId, organizationId)),
+                    Update<Keyword>.Set(x => x.IsDeleted, true)
+                                   .Set(x => x.DeletedAt, DateTime.Now)
+                                   .Set(x => x.DeletedBy, "System"));
+
+            if (result.Ok)
+            {
+                if (!keywordRepository.AsQueryable().Any(x => x.Key == keyword)) {
+                    var result2 =
+                        distinctKeywordRepository.Update(
+                            Query.And(Query<DistinctKeyword>.EQ(x => x.Key, keyword)),
+                            Update<DistinctKeyword>.Set(x => x.IsDeleted, true)
+                                                   .Set(x => x.DeletedAt, DateTime.Now)
+                                                   .Set(x => x.DeletedBy, "System"));
+
+                    if (!result2.Ok) {
+
+                        //another something better needed place...
+                        distinctKeywordRepository.Update(
+                            Query.And(Query<DistinctKeyword>.EQ(x => x.Key, keyword)),
+                            Update<DistinctKeyword>.Set(x => x.IsDeleted, true)
+                                                   .Set(x => x.DeletedAt, DateTime.Now)
+                                                   .Set(x => x.DeletedBy, "System"));
+                    }
                 }
 
                 return true;

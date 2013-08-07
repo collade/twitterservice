@@ -1,34 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using TechTalk.SpecFlow;
-
-namespace TwitterService.Specs
+﻿namespace TwitterService.Specs
 {
+    using TechTalk.SpecFlow;
     using NUnit.Framework;
 
-    using TwitterService.Business.Entities;
-    using TwitterService.Business.Repos;
-    using TwitterService.Business.Services;
-
     [Binding]
-    public class AddingKeywords
+    public class AddingKeywords : SpecSetup
     {
-        TwitterService _service;
-        IEntityRepository<Keyword> _keywordRepository;
-        IEntityRepository<DistinctKeyword> _distinctKeywordRepository;
-        IEntityRepository<Organization> _organizationRepository;
-
         [Given(@"I am a user in organization ""(.*)""")]
         public void GivenIAmAUserInOrganization(string organization)
         {
-            _keywordRepository = new EntityRepository<Keyword>();
-            _distinctKeywordRepository = new EntityRepository<DistinctKeyword>();
-            _organizationRepository = new EntityRepository<Organization>();
-
-            _service = new TwitterService(_organizationRepository, _keywordRepository, _distinctKeywordRepository);
-
             Assert.IsNotNull(_service);
             Assert.AreEqual(true, _service.AddOrganization(organization));
         }
