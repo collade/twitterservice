@@ -1,6 +1,7 @@
 ﻿namespace TwitterService.Business.Services
 {
     using System;
+    using System.Collections.Generic;
     using System.Globalization;
     using System.Linq;
     using System.Threading.Tasks;
@@ -83,6 +84,8 @@
                 return false;
             }
 
+            keyword = keyword.ToLowerInvariant();
+
             var result =
                 keywordRepository.Add(
                     new Keyword
@@ -102,7 +105,7 @@
                             new DistinctKeyword { CreatedBy = "System", UpdatedBy = "System", Key = keyword });
 
                     var twitterContext = GetTwitterContext();
-                    this.RealTimeSearchTwitter(twitterContext, keyword);
+                    this.RealTimeSearchTwitter(twitterContext, keyword, new List<string> { keyword });
 
                     if (!result2.Ok)
                     {
@@ -212,11 +215,8 @@
         {
             try
             {
-                var twitterContext = GetTwitterContext();
-
                 if (!distinctKeywordRepository.AsQueryable().Any())
                 {
-
                     const string OrganizationId = "1";
 
                     this.AddOrganization(OrganizationId);
@@ -237,15 +237,16 @@
                     this.AddKeyword(OrganizationId, "girl");
                 }
 
-                var keywords = distinctKeywordRepository.AsQueryable().ToList();
+                var keywords = distinctKeywordRepository.AsQueryable().ToList().Select(x => x.Key).ToList();
+
+                var keys = string.Empty;
                 foreach (var key in keywords)
                 {
-                    Task.Factory.StartNew(
-                        () =>
-                        { this.RealTimeSearchTwitter(twitterContext, key.Key); });
-
-
+                    keys += string.Format("{0},", key);
                 }
+
+                var twitterContext = GetTwitterContext();
+                this.RealTimeSearchTwitter(twitterContext, keys, keywords);
 
                 return true;
             }
@@ -263,9 +264,9 @@
                     new SingleUserInMemoryCredentials
                     {
                         ConsumerKey =
-                            "UQxc0w8jgGdbyJlSnXyQ",
+                            "onZSPzzGF2TbmcRFenWg",
                         ConsumerSecret =
-                            "tfqH0hb9zLuM4RNX1VwvKlovPsfHyCo5V0pBBwH5w",
+                            "06tif8gnaOnuCo0nziIoPETw0xpf2Ve2tgBOzQ",
                         TwitterAccessToken =
                             "18249700-hLL3tsmnE5yNVBxpjt080k4fimhC1R4YdRFFoLAuQ",
                         TwitterAccessTokenSecret =
@@ -276,7 +277,7 @@
         }
 
 
-        private void RealTimeSearchTwitter(TwitterContext twitterContext, string keyword)
+        private void RealTimeSearchTwitter(TwitterContext twitterContext, string keyword, List<string> keys)
         {
             var streamItems =
                 twitterContext.Streaming.Where(x => x.Type == StreamingType.Filter && x.Track == keyword).StreamingCallback(
@@ -287,23 +288,31 @@
                             try
                             {
                                 dynamic obj = JsonConvert.DeserializeObject(x.Content);
+
+                                string text = obj.text;
+                                var _key = string.Empty;
+                                foreach (var key in keys)
+                                {
+                                    if (text.ToLowerInvariant().Contains(key))
+                                    {
+                                        _key = key;
+                                        break;
+                                    }
+                                }
+
                                 this.tweetRepository.Add(
                                     new Tweet
                                     {
                                         CreatedBy = "System",
                                         UpdatedBy = "System",
-                                        TweetText = obj.text,
+                                        TweetText = text,
                                         TweetStatusID = obj.id_str,
                                         TwitterUserID = obj.user.id_str,
                                         TwitterUserImageUrl = obj.user.profile_image_url_https,
                                         TwitterUserName = obj.user.screen_name,
-                                        CreatedAt =
-                                            DateTime.ParseExact(
-                                                (string)obj.created_at,
-                                                "ddd MMM dd HH:mm:ss zzz yyyy",
-                                                CultureInfo.InvariantCulture),
+                                        CreatedAt = DateTime.ParseExact((string)obj.created_at, "ddd MMM dd HH:mm:ss zzz yyyy", CultureInfo.InvariantCulture),
                                         UpdatedAt = DateTime.Now,
-                                        Keyword = keyword
+                                        Keyword = _key
                                     });
                             }
                             catch (Exception)
