@@ -19,21 +19,22 @@ namespace TwitterService.Specs
     [System.CodeDom.Compiler.GeneratedCodeAttribute("TechTalk.SpecFlow", "1.9.0.77")]
     [System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     [NUnit.Framework.TestFixtureAttribute()]
-    [NUnit.Framework.DescriptionAttribute("Search In Twitter")]
-    public partial class SearchInTwitterFeature
+    [NUnit.Framework.DescriptionAttribute("Realtime Search Saved Keywords")]
+    public partial class RealtimeSearchSavedKeywordsFeature
     {
         
         private static TechTalk.SpecFlow.ITestRunner testRunner;
         
-#line 1 "SearchInTwitter.feature"
+#line 1 "RealtimeSearchSavedKeywords.feature"
 #line hidden
         
         [NUnit.Framework.TestFixtureSetUpAttribute()]
         public virtual void FeatureSetup()
         {
             testRunner = TechTalk.SpecFlow.TestRunnerManager.GetTestRunner();
-            TechTalk.SpecFlow.FeatureInfo featureInfo = new TechTalk.SpecFlow.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "Search In Twitter", "In order to search keywords in twitter\r\nAs a user\r\nI want to search a keyword in " +
-                    "public latest tweets\r\nSo that service will save tweets containing keyword", ProgrammingLanguage.CSharp, ((string[])(null)));
+            TechTalk.SpecFlow.FeatureInfo featureInfo = new TechTalk.SpecFlow.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "Realtime Search Saved Keywords", "In order to realtime search saved keywords in twitter\r\nAs a user\r\nI want to searc" +
+                    "h a keyword in public stream\r\nSo that service will save tweets containing keywor" +
+                    "ds", ProgrammingLanguage.CSharp, ((string[])(null)));
             testRunner.OnFeatureStart(featureInfo);
         }
         
@@ -66,16 +67,16 @@ namespace TwitterService.Specs
         }
         
         [NUnit.Framework.TestAttribute()]
-        [NUnit.Framework.DescriptionAttribute("Search a keyword")]
-        public virtual void SearchAKeyword()
+        [NUnit.Framework.DescriptionAttribute("Search tweet stream for saved keyword")]
+        public virtual void SearchTweetStreamForSavedKeyword()
         {
-            TechTalk.SpecFlow.ScenarioInfo scenarioInfo = new TechTalk.SpecFlow.ScenarioInfo("Search a keyword", ((string[])(null)));
+            TechTalk.SpecFlow.ScenarioInfo scenarioInfo = new TechTalk.SpecFlow.ScenarioInfo("Search tweet stream for saved keyword", ((string[])(null)));
 #line 7
 this.ScenarioSetup(scenarioInfo);
 #line 8
- testRunner.When("I call Search function with parameters keyword \"keyword\"", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
+ testRunner.When("the run method called", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
 #line 9
- testRunner.Then("if any there is any tweet db should have \"keyword\" containing tweets saved", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Then ");
+ testRunner.Then("if there is any tweet containing saved keywords shoul be saved to db", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Then ");
 #line hidden
             this.ScenarioCleanup();
         }

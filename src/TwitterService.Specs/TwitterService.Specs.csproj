@@ -62,6 +62,12 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>AddingKeywords.feature</DependentUpon>
     </Compile>
+    <Compile Include="RealtimeSearchSavedKeywords.cs" />
+    <Compile Include="RealtimeSearchSavedKeywords.feature.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>RealtimeSearchSavedKeywords.feature</DependentUpon>
+    </Compile>
     <Compile Include="RemovingKeywords.cs" />
     <Compile Include="RemovingKeywords.feature.cs">
       <AutoGen>True</AutoGen>
@@ -83,6 +89,10 @@
       <LastGenOutput>AddingKeywords.feature.cs</LastGenOutput>
     </None>
     <None Include="App.config" />
+    <None Include="RealtimeSearchSavedKeywords.feature">
+      <Generator>SpecFlowSingleFileGenerator</Generator>
+      <LastGenOutput>RealtimeSearchSavedKeywords.feature.cs</LastGenOutput>
+    </None>
     <None Include="RemovingKeywords.feature">
       <Generator>SpecFlowSingleFileGenerator</Generator>
       <LastGenOutput>RemovingKeywords.feature.cs</LastGenOutput>

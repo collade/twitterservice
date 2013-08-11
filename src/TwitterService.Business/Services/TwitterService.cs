@@ -183,23 +183,7 @@
                 return 0;
             }
 
-            var auth = new SingleUserAuthorizer
-            {
-                Credentials =
-                    new SingleUserInMemoryCredentials
-                    {
-                        ConsumerKey =
-                            "UQxc0w8jgGdbyJlSnXyQ",
-                        ConsumerSecret =
-                            "tfqH0hb9zLuM4RNX1VwvKlovPsfHyCo5V0pBBwH5w",
-                        TwitterAccessToken =
-                            "18249700-hLL3tsmnE5yNVBxpjt080k4fimhC1R4YdRFFoLAuQ",
-                        TwitterAccessTokenSecret =
-                            "M2BXS5XBxD3ta5YknXjAeoZ44qZSJnXFLVKzEsdWlY"
-                    }
-            };
-
-            var twitterContext = new TwitterContext(auth);
+            var twitterContext = GetTwitterContext();
 
             var items = twitterContext.Search.Single(x => x.Type == SearchType.Search && x.Query == keyword);
             foreach (var item in items.Statuses)
@@ -225,8 +209,7 @@
             return items.Statuses.Count;
         }
 
-        public void Run()
-        {
+        private static TwitterContext GetTwitterContext() {
             var auth = new SingleUserAuthorizer
             {
                 Credentials =
@@ -242,8 +225,12 @@
                             "M2BXS5XBxD3ta5YknXjAeoZ44qZSJnXFLVKzEsdWlY"
                     }
             };
+            return new TwitterContext(auth);
+        }
 
-            var twitterContext = new TwitterContext(auth);
+        public void Run()
+        {
+            var twitterContext = GetTwitterContext();
 
             var streamItems = twitterContext.Streaming.Where(x => x.Type == StreamingType.Filter && x.Track == "girl").StreamingCallback(
                 x =>

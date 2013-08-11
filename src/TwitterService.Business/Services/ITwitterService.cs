@@ -5,7 +5,6 @@
     [ServiceContract]
     public interface ITwitterService
     {
-
         [OperationContract]
         bool HasOrganization(string organizationId);
         [OperationContract]
