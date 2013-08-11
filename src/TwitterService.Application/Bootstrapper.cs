@@ -44,13 +44,12 @@
                      .Configure(
                          configurer =>
                          configurer.Named(configurer.Implementation.Name)
-                                   .LifestylePerWcfOperation()
+                                   .LifestyleSingleton()
                                    .AsWcfService(
                                        new DefaultServiceModel().AddEndpoints(
                                            WcfEndpoint.BoundTo(netNamedPipeBinding)
                                                       .At(string.Format("net.pipe://localhost:{0}/{1}", port, configurer.Implementation.Name))).PublishMetadata()))
                      .WithService.Select((type, baseTypes) => type.GetInterfaces().Where(i => i.IsDefined(typeof(ServiceContractAttribute), true))));
-
         }
     }
 }

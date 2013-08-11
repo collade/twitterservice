@@ -9,5 +9,9 @@
         bool AddKeyword(string organizationId, string keyword);
 
         bool RemoveKeyword(string organizationId, string keyword);
+
+        int Search(string keyword);
+
+        void Run();
     }
 }

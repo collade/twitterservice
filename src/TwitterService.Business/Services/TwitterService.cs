@@ -2,25 +2,34 @@
 {
     using System;
     using System.Linq;
+    using System.Threading;
+
+    using LinqToTwitter;
 
     using MongoDB.Driver.Builders;
+
+    using Newtonsoft.Json;
 
     using global::TwitterService.Business.Entities;
     using global::TwitterService.Business.Repos;
 
-    public class TwitterService : BaseService, ITwitterService {
+    public class TwitterService : BaseService, ITwitterService
+    {
         private readonly IEntityRepository<Organization> organizationRepository;
         private readonly IEntityRepository<Keyword> keywordRepository;
         private readonly IEntityRepository<DistinctKeyword> distinctKeywordRepository;
+        private readonly IEntityRepository<Tweet> tweetRepository;
 
         public TwitterService(
             IEntityRepository<Organization> organizationRepository,
             IEntityRepository<Keyword> keywordRepository,
-            IEntityRepository<DistinctKeyword> distinctKeywordRepository)
+            IEntityRepository<DistinctKeyword> distinctKeywordRepository,
+            IEntityRepository<Tweet> tweetRepository)
         {
             this.organizationRepository = organizationRepository;
             this.keywordRepository = keywordRepository;
             this.distinctKeywordRepository = distinctKeywordRepository;
+            this.tweetRepository = tweetRepository;
         }
 
         public bool HasOrganization(string organizationId)
@@ -139,7 +148,8 @@
 
             if (result.Ok)
             {
-                if (!keywordRepository.AsQueryable().Any(x => x.Key == keyword)) {
+                if (!keywordRepository.AsQueryable().Any(x => x.Key == keyword))
+                {
                     var result2 =
                         distinctKeywordRepository.Update(
                             Query.And(Query<DistinctKeyword>.EQ(x => x.Key, keyword)),
@@ -147,7 +157,8 @@
                                                    .Set(x => x.DeletedAt, DateTime.Now)
                                                    .Set(x => x.DeletedBy, "System"));
 
-                    if (!result2.Ok) {
+                    if (!result2.Ok)
+                    {
 
                         //another something better needed place...
                         distinctKeywordRepository.Update(
@@ -162,6 +173,100 @@
             }
 
             return false;
+        }
+
+        public int Search(string keyword)
+        {
+            if (string.IsNullOrEmpty(keyword))
+            {
+                return 0;
+            }
+
+            var auth = new SingleUserAuthorizer
+            {
+                Credentials =
+                    new SingleUserInMemoryCredentials
+                    {
+                        ConsumerKey =
+                            "UQxc0w8jgGdbyJlSnXyQ",
+                        ConsumerSecret =
+                            "tfqH0hb9zLuM4RNX1VwvKlovPsfHyCo5V0pBBwH5w",
+                        TwitterAccessToken =
+                            "18249700-hLL3tsmnE5yNVBxpjt080k4fimhC1R4YdRFFoLAuQ",
+                        TwitterAccessTokenSecret =
+                            "M2BXS5XBxD3ta5YknXjAeoZ44qZSJnXFLVKzEsdWlY"
+                    }
+            };
+
+            var twitterContext = new TwitterContext(auth);
+
+            var items = twitterContext.Search.Single(x => x.Type == SearchType.Search && x.Query == keyword);
+            foreach (var item in items.Statuses)
+            {
+                tweetRepository.Add(new Tweet
+                {
+                    CreatedBy = "System",
+                    UpdatedBy = "System",
+
+                    TweetText = item.Text,
+                    TweetStatusID = item.StatusID,
+
+                    TwitterUserID = item.User.Identifier.UserID,
+                    TwitterUserImageUrl = item.User.ProfileImageUrlHttps,
+                    TwitterUserName = item.User.Identifier.ScreenName,
+
+                    CreatedAt = item.CreatedAt,
+                    UpdatedAt = DateTime.Now,
+                    Keyword = keyword
+                });
+            }
+
+            return items.Statuses.Count;
+        }
+
+        public void Run() {
+            var auth = new SingleUserAuthorizer
+            {
+                Credentials =
+                    new SingleUserInMemoryCredentials
+                    {
+                        ConsumerKey =
+                            "UQxc0w8jgGdbyJlSnXyQ",
+                        ConsumerSecret =
+                            "tfqH0hb9zLuM4RNX1VwvKlovPsfHyCo5V0pBBwH5w",
+                        TwitterAccessToken =
+                            "18249700-hLL3tsmnE5yNVBxpjt080k4fimhC1R4YdRFFoLAuQ",
+                        TwitterAccessTokenSecret =
+                            "M2BXS5XBxD3ta5YknXjAeoZ44qZSJnXFLVKzEsdWlY"
+                    }
+            };
+
+            var twitterContext = new TwitterContext(auth);
+
+            var streamItems = twitterContext.Streaming.Where(x => x.Type == StreamingType.Filter && x.Track == "girl").StreamingCallback(
+                x =>
+                {
+                    if (x.Status == TwitterErrorStatus.Success)
+                    {
+                        dynamic obj = JsonConvert.DeserializeObject(x.Content);
+                        tweetRepository.Add(new Tweet
+                        {
+                            CreatedBy = "System",
+                            UpdatedBy = "System",
+
+                            TweetText = obj.text,
+                            TweetStatusID = obj.id_str,
+
+                            TwitterUserID = obj.user.id_str,
+                            TwitterUserImageUrl = obj.user.profile_image_url_https,
+                            TwitterUserName = obj.user.screen_name,
+
+                            CreatedAt = obj.created_at,
+                            UpdatedAt = DateTime.Now,
+                            Keyword = "girl"
+                        });
+                    }
+                }).SingleOrDefault();
         }
     }
 }
