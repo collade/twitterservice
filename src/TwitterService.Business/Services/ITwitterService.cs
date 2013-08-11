@@ -24,6 +24,6 @@
         int Search(string keyword);
 
         [OperationContract]
-        void Run();
+        bool Run();
     }
 }

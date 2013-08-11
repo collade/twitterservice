@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using TechTalk.SpecFlow;
-
-namespace TwitterService.Specs
+﻿namespace TwitterService.Specs
 {
+    using NUnit.Framework;
+    using TechTalk.SpecFlow;
+
     [Binding]
     public class RealtimeSearchSavedKeywords : SpecSetup
     {
@@ -18,8 +15,7 @@ namespace TwitterService.Specs
         [Then(@"if there is any tweet containing saved keywords shoul be saved to db")]
         public void ThenIfThereIsAnyTweetContainingSavedKeywordsShoulBeSavedToDb()
         {
-
-            ScenarioContext.Current.Pending();
+            Assert.AreEqual(true, _service.Run());
         }
     }
 }
