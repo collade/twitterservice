@@ -4,6 +4,7 @@
     using System.Configuration;
     using System.Linq;
     using System.ServiceModel;
+    using System.Threading;
 
     using Castle.Facilities.Logging;
     using Castle.Facilities.WcfIntegration;
@@ -22,8 +23,6 @@
             Container = new WindsorContainer();
             Container.AddFacility<WcfFacility>();
             Container.AddFacility<LoggingFacility>(f => f.UseNLog());
-
-            var port = ConfigurationManager.AppSettings["Port"];
 
             var netNamedPipeBinding = new NetNamedPipeBinding
             {
@@ -48,8 +47,13 @@
                                    .AsWcfService(
                                        new DefaultServiceModel().AddEndpoints(
                                            WcfEndpoint.BoundTo(netNamedPipeBinding)
-                                                      .At(string.Format("net.pipe://localhost:{0}/{1}", port, configurer.Implementation.Name))).PublishMetadata()))
+                                                      .At(string.Format("net.pipe://localhost/{0}", configurer.Implementation.Name))).PublishMetadata()))
                      .WithService.Select((type, baseTypes) => type.GetInterfaces().Where(i => i.IsDefined(typeof(ServiceContractAttribute), true))));
+
+            Thread.Sleep(1000);
+            var twitterService = Container.Resolve<ITwitterService>();
+            twitterService.Run();
+            
         }
     }
 }

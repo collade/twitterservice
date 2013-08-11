@@ -1,6 +1,7 @@
 ﻿namespace TwitterService.Business.Services
 {
     using System;
+    using System.Globalization;
     using System.Linq;
     using System.Threading;
 
@@ -224,7 +225,8 @@
             return items.Statuses.Count;
         }
 
-        public void Run() {
+        public void Run()
+        {
             var auth = new SingleUserAuthorizer
             {
                 Credentials =
@@ -261,7 +263,7 @@
                             TwitterUserImageUrl = obj.user.profile_image_url_https,
                             TwitterUserName = obj.user.screen_name,
 
-                            CreatedAt = obj.created_at,
+                            CreatedAt = DateTime.ParseExact((string)obj.created_at, "ddd MMM dd HH:mm:ss zzz yyyy", CultureInfo.InvariantCulture),
                             UpdatedAt = DateTime.Now,
                             Keyword = "girl"
                         });
