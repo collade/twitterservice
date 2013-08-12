@@ -217,7 +217,7 @@
             {
                 if (!distinctKeywordRepository.AsQueryable().Any())
                 {
-                    const string OrganizationId = "1";
+                    const string OrganizationId = "51fb4622902c7f0fecca0343";
 
                     this.AddOrganization(OrganizationId);
 
@@ -232,9 +232,17 @@
                     this.AddKeyword(OrganizationId, "task management");
                     this.AddKeyword(OrganizationId, "team management");
                     this.AddKeyword(OrganizationId, "collaboration software");
+                    this.AddKeyword(OrganizationId, "collaborative project management");
                     this.AddKeyword(OrganizationId, "collaborative project management tool");
+                    this.AddKeyword(OrganizationId, "collaborative task management");
                     this.AddKeyword(OrganizationId, "business chat");
-                    this.AddKeyword(OrganizationId, "girl");
+                    this.AddKeyword(OrganizationId, "group chat");
+
+                    this.AddKeyword(OrganizationId, "flowdock");
+                    this.AddKeyword(OrganizationId, "trello");
+                    this.AddKeyword(OrganizationId, "kanbanize");
+                    this.AddKeyword(OrganizationId, "pivotal tracker");
+                    this.AddKeyword(OrganizationId, "kanbanery");
                 }
 
                 var keywords = distinctKeywordRepository.AsQueryable().ToList().Select(x => x.Key).ToList();
