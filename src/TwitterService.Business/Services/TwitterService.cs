@@ -4,11 +4,14 @@
     using System.Collections.Generic;
     using System.Globalization;
     using System.Linq;
+    using System.Threading;
     using System.Threading.Tasks;
 
     using LinqToTwitter;
     using MongoDB.Driver.Builders;
     using Newtonsoft.Json;
+
+    using PusherServer;
 
     using global::TwitterService.Business.Entities;
     using global::TwitterService.Business.Repos;
@@ -19,17 +22,20 @@
         private readonly IEntityRepository<Keyword> keywordRepository;
         private readonly IEntityRepository<DistinctKeyword> distinctKeywordRepository;
         private readonly IEntityRepository<Tweet> tweetRepository;
+        private readonly Pusher pusherServer;
 
         public TwitterService(
             IEntityRepository<Organization> organizationRepository,
             IEntityRepository<Keyword> keywordRepository,
             IEntityRepository<DistinctKeyword> distinctKeywordRepository,
-            IEntityRepository<Tweet> tweetRepository)
+            IEntityRepository<Tweet> tweetRepository,
+            Pusher pusherServer)
         {
             this.organizationRepository = organizationRepository;
             this.keywordRepository = keywordRepository;
             this.distinctKeywordRepository = distinctKeywordRepository;
             this.tweetRepository = tweetRepository;
+            this.pusherServer = pusherServer;
         }
 
         public bool HasOrganization(string organizationId)
@@ -298,14 +304,29 @@
                                 dynamic obj = JsonConvert.DeserializeObject(x.Content);
 
                                 string text = obj.text;
-                                var _key = string.Empty;
+                                var tag = string.Empty;
                                 foreach (var key in keys)
                                 {
                                     if (text.ToLowerInvariant().Contains(key))
                                     {
-                                        _key = key;
+                                        tag = key;
                                         break;
                                     }
+                                }
+
+                                var userName = obj.user.screen_name;
+                                var userImgUrl = obj.user.profile_image_url_https;
+                                var statusId = obj.id_str;
+                                var time = DateTime.ParseExact((string)obj.created_at, "ddd MMM dd HH:mm:ss zzz yyyy", CultureInfo.InvariantCulture);
+                                var time2 = time.ToString("dd MMMM dddd - HH:mm");
+
+                                //find who you wil notify
+                                var keywords = keywordRepository.AsQueryable().Where(y => y.Key == tag);
+                                foreach (var organizationKeyword in keywords)
+                                {
+                                    var orgKey = organizationKeyword;
+                                    ThreadPool.QueueUserWorkItem(m => pusherServer.Trigger(string.Format("presence-{0}", orgKey.OrganizationId), "tweet_added",
+                                        new { statusId, text, tag, userName, userImgUrl, time2 }));
                                 }
 
                                 this.tweetRepository.Add(
@@ -314,13 +335,13 @@
                                         CreatedBy = "System",
                                         UpdatedBy = "System",
                                         TweetText = text,
-                                        TweetStatusID = obj.id_str,
+                                        TweetStatusID = statusId,
                                         TwitterUserID = obj.user.id_str,
-                                        TwitterUserImageUrl = obj.user.profile_image_url_https,
-                                        TwitterUserName = obj.user.screen_name,
-                                        CreatedAt = DateTime.ParseExact((string)obj.created_at, "ddd MMM dd HH:mm:ss zzz yyyy", CultureInfo.InvariantCulture),
+                                        TwitterUserImageUrl = userImgUrl,
+                                        TwitterUserName = userName,
+                                        CreatedAt = time,
                                         UpdatedAt = DateTime.Now,
-                                        Keyword = _key
+                                        Keyword = tag
                                     });
                             }
                             catch (Exception)
