@@ -44,9 +44,9 @@
                 Component.For<ExceptionInterceptor>(),
                 Component.For(typeof(IEntityRepository<>)).ImplementedBy(typeof(EntityRepository<>)),
                 Component.For<Pusher>().DependsOn(new Hashtable {
-                                                                    {"pusherAppId",pusherAppId},
-                                                                    {"pusherAppKey",pusherAppKey},
-                                                                    {"pusherAppSecret",pusherAppSecret},
+                                                                    {"appId",pusherAppId},
+                                                                    {"appKey",pusherAppKey},
+                                                                    {"appSecret",pusherAppSecret},
                                                                 }),
                 Types.FromAssemblyNamed("TwitterService.Business")
                      .Pick()
