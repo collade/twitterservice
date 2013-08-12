@@ -1,6 +1,7 @@
 ﻿namespace TwitterService.Application
 {
     using System;
+    using System.Collections;
     using System.Configuration;
     using System.Linq;
     using System.ServiceModel;
@@ -10,6 +11,8 @@
     using Castle.Facilities.WcfIntegration;
     using Castle.MicroKernel.Registration;
     using Castle.Windsor;
+
+    using PusherServer;
 
     using TwitterService.Business.Repos;
     using TwitterService.Business.Services;
@@ -33,9 +36,18 @@
                 SendTimeout = new TimeSpan(0, 30, 0)
             };
 
+            var pusherAppId = ConfigurationManager.AppSettings["pusherAppId"];
+            var pusherAppKey = ConfigurationManager.AppSettings["pusherAppKey"];
+            var pusherAppSecret = ConfigurationManager.AppSettings["pusherAppSecret"];
+
             Container.Register(
                 Component.For<ExceptionInterceptor>(),
                 Component.For(typeof(IEntityRepository<>)).ImplementedBy(typeof(EntityRepository<>)),
+                Component.For<Pusher>().DependsOn(new Hashtable {
+                                                                    {"pusherAppId",pusherAppId},
+                                                                    {"pusherAppKey",pusherAppKey},
+                                                                    {"pusherAppSecret",pusherAppSecret},
+                                                                }),
                 Types.FromAssemblyNamed("TwitterService.Business")
                      .Pick()
                      .If(type => type.GetInterfaces()
@@ -53,7 +65,7 @@
             Thread.Sleep(1000);
             var twitterService = Container.Resolve<ITwitterService>();
             twitterService.Run();
-            
+
         }
     }
 }
