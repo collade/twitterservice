@@ -314,35 +314,38 @@
                                     }
                                 }
 
-                                var userName = obj.user.screen_name;
-                                var userImgUrl = obj.user.profile_image_url_https;
-                                var statusId = obj.id_str;
-                                var time = DateTime.ParseExact((string)obj.created_at, "ddd MMM dd HH:mm:ss zzz yyyy", CultureInfo.InvariantCulture);
-                                var time2 = time.ToString("dd MMMM dddd - HH:mm");
-
-                                //find who you wil notify
-                                var keywords = keywordRepository.AsQueryable().Where(y => y.Key == tag);
-                                foreach (var organizationKeyword in keywords)
+                                if (!string.IsNullOrEmpty(tag))
                                 {
-                                    var orgKey = organizationKeyword;
-                                    ThreadPool.QueueUserWorkItem(m => pusherServer.Trigger(string.Format("presence-{0}", orgKey.OrganizationId), "tweet_added",
-                                        new { statusId, text, tag, userName, userImgUrl, time2 }));
-                                }
+                                    string userName = obj.user.screen_name;
+                                    string userImgUrl = obj.user.profile_image_url_https;
+                                    string statusId = obj.id_str;
+                                    var time = DateTime.ParseExact((string)obj.created_at, "ddd MMM dd HH:mm:ss zzz yyyy", CultureInfo.InvariantCulture);
+                                    string time2 = time.ToString("dd MMMM dddd - HH:mm", CultureInfo.InvariantCulture);
 
-                                this.tweetRepository.Add(
-                                    new Tweet
+                                    //find who you wil notify
+                                    var keywords = keywordRepository.AsQueryable().Where(y => y.Key == tag);
+                                    foreach (var organizationKeyword in keywords)
                                     {
-                                        CreatedBy = "System",
-                                        UpdatedBy = "System",
-                                        TweetText = text,
-                                        TweetStatusID = statusId,
-                                        TwitterUserID = obj.user.id_str,
-                                        TwitterUserImageUrl = userImgUrl,
-                                        TwitterUserName = userName,
-                                        CreatedAt = time,
-                                        UpdatedAt = DateTime.Now,
-                                        Keyword = tag
-                                    });
+                                        var orgKey = organizationKeyword;
+                                        ThreadPool.QueueUserWorkItem(m => pusherServer.Trigger(string.Format("presence-{0}", orgKey.OrganizationId), "tweet_added",
+                                            new { statusId, text, tag, userName, userImgUrl, time2 }));
+                                    }
+
+                                    this.tweetRepository.Add(
+                                        new Tweet
+                                        {
+                                            CreatedBy = "System",
+                                            UpdatedBy = "System",
+                                            TweetText = text,
+                                            TweetStatusID = statusId,
+                                            TwitterUserID = obj.user.id_str,
+                                            TwitterUserImageUrl = userImgUrl,
+                                            TwitterUserName = userName,
+                                            CreatedAt = time,
+                                            UpdatedAt = DateTime.Now,
+                                            Keyword = tag
+                                        });
+                                }
                             }
                             catch (Exception)
                             {
