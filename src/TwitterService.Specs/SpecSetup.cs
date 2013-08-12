@@ -35,5 +35,7 @@
             var mongoDatabase = new MongoClient(mongoCnnStr).GetServer().GetDatabase(ConfigurationManager.AppSettings["MongoDBName"]);
             mongoDatabase.Drop();
         }
+
+        public string OrganizationId = "51fb4622902c7f0fecca0343";
     }
 }

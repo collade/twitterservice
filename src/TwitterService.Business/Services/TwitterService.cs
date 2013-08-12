@@ -229,26 +229,10 @@
 
                     this.AddKeyword(OrganizationId, "collade");
                     this.AddKeyword(OrganizationId, "agile");
-                    this.AddKeyword(OrganizationId, "scrum");
                     this.AddKeyword(OrganizationId, "kanban");
-                    this.AddKeyword(OrganizationId, "startup");
-                    this.AddKeyword(OrganizationId, "tech startup");
                     this.AddKeyword(OrganizationId, "collaboration");
-                    this.AddKeyword(OrganizationId, "project management");
                     this.AddKeyword(OrganizationId, "task management");
-                    this.AddKeyword(OrganizationId, "team management");
-                    this.AddKeyword(OrganizationId, "collaboration software");
-                    this.AddKeyword(OrganizationId, "collaborative project management");
-                    this.AddKeyword(OrganizationId, "collaborative project management tool");
-                    this.AddKeyword(OrganizationId, "collaborative task management");
-                    this.AddKeyword(OrganizationId, "business chat");
-                    this.AddKeyword(OrganizationId, "group chat");
-
-                    this.AddKeyword(OrganizationId, "flowdock");
-                    this.AddKeyword(OrganizationId, "trello");
-                    this.AddKeyword(OrganizationId, "kanbanize");
-                    this.AddKeyword(OrganizationId, "pivotal tracker");
-                    this.AddKeyword(OrganizationId, "kanbanery");
+      
                 }
 
                 var keywords = distinctKeywordRepository.AsQueryable().ToList().Select(x => x.Key).ToList();
@@ -268,6 +252,31 @@
             {
                 return false;
             }
+        }
+
+        public List<string> GetKeywords(string organizationId)
+        {
+
+            if (string.IsNullOrEmpty(organizationId))
+            {
+                return new List<string>();
+            }
+
+            if (!HasOrganization(organizationId))
+            {
+                return new List<string>();
+            }
+
+            if (keywordRepository.AsQueryable().Any(x => x.OrganizationId == organizationId))
+            {
+                return
+                    keywordRepository.AsQueryable()
+                                     .Where(x => x.OrganizationId == organizationId)
+                                     .Select(x => x.Key)
+                                     .ToList();
+            }
+
+            return new List<string>();
         }
 
         private static TwitterContext GetTwitterContext()

@@ -1,5 +1,6 @@
 ﻿namespace TwitterService.Business.Services
 {
+    using System.Collections.Generic;
     using System.ServiceModel;
 
     [ServiceContract]
@@ -25,5 +26,8 @@
 
         [OperationContract]
         bool Run();
+
+        [OperationContract]
+        List<string> GetKeywords(string organizationId);
     }
 }
