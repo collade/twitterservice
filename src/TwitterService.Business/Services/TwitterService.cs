@@ -167,7 +167,7 @@
             }
 
             var result =
-                keywordRepository.Update(
+                keywordRepository.UpdateMulti(
                     Query.And(
                         Query<Keyword>.EQ(x => x.Key, keyword),
                         Query<Keyword>.EQ(x => x.OrganizationId, organizationId)),
@@ -180,7 +180,7 @@
                 if (!keywordRepository.AsQueryable().Any(x => x.Key == keyword))
                 {
                     var result2 =
-                        distinctKeywordRepository.Update(
+                        distinctKeywordRepository.UpdateMulti(
                             Query.And(Query<DistinctKeyword>.EQ(x => x.Key, keyword)),
                             Update<DistinctKeyword>.Set(x => x.IsDeleted, true)
                                                    .Set(x => x.DeletedAt, DateTime.Now)
@@ -200,7 +200,7 @@
                     if (!result2.Ok)
                     {
                         //another something better needed place...
-                        distinctKeywordRepository.Update(
+                        distinctKeywordRepository.UpdateMulti(
                             Query.And(Query<DistinctKeyword>.EQ(x => x.Key, keyword)),
                             Update<DistinctKeyword>.Set(x => x.IsDeleted, true)
                                                    .Set(x => x.DeletedAt, DateTime.Now)
