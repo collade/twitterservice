@@ -310,7 +310,8 @@
                             StatusID = item.TweetStatusID,
                             Text = item.TweetText,
                             UserImageUrl = item.TwitterUserImageUrl,
-                            UserName = item.TwitterUserName
+                            UserName = item.TwitterUserName,
+                            CreatedAt = item.CreatedAt
                         });
                     }
                 }
