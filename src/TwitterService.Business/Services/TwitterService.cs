@@ -1,7 +1,9 @@
 ﻿namespace TwitterService.Business.Services
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
+    using System.Configuration;
     using System.Globalization;
     using System.Linq;
     using System.Threading;
@@ -24,6 +26,8 @@
         private readonly IEntityRepository<Tweet> tweetRepository;
         private readonly Pusher pusherServer;
 
+        ConcurrentDictionary<string, CancellationTokenSource> cancellationTokenSources;
+
         public TwitterService(
             IEntityRepository<Organization> organizationRepository,
             IEntityRepository<Keyword> keywordRepository,
@@ -36,6 +40,8 @@
             this.distinctKeywordRepository = distinctKeywordRepository;
             this.tweetRepository = tweetRepository;
             this.pusherServer = pusherServer;
+
+            this.cancellationTokenSources = new ConcurrentDictionary<string, CancellationTokenSource>();
         }
 
         public bool HasOrganization(string organizationId)
@@ -110,8 +116,21 @@
                         distinctKeywordRepository.Add(
                             new DistinctKeyword { CreatedBy = "System", UpdatedBy = "System", Key = keyword });
 
-                    var twitterContext = GetTwitterContext();
-                    this.RealTimeSearchTwitter(twitterContext, keyword, new List<string> { keyword });
+                    cancellationTokenSources.TryAdd(keyword, new CancellationTokenSource());
+                    var task = new Task(
+                        () =>
+                        {
+                            var twitterContext = GetTwitterContext();
+                            this.RealTimeSearchTwitter(twitterContext, keyword);
+
+                            if (cancellationTokenSources[keyword].Token.IsCancellationRequested)
+                            {
+                                Console.WriteLine(keyword + " task canceled");
+                            }
+
+                        }, cancellationTokenSources[keyword].Token);
+
+                    task.Start();
 
                     if (!result2.Ok)
                     {
@@ -166,6 +185,17 @@
                             Update<DistinctKeyword>.Set(x => x.IsDeleted, true)
                                                    .Set(x => x.DeletedAt, DateTime.Now)
                                                    .Set(x => x.DeletedBy, "System"));
+
+                    try
+                    {
+                        CancellationTokenSource source;
+                        cancellationTokenSources[keyword].Cancel();
+                        cancellationTokenSources.TryRemove(keyword, out source);
+                    }
+                    catch (Exception)
+                    {
+
+                    }
 
                     if (!result2.Ok)
                     {
@@ -232,19 +262,22 @@
                     this.AddKeyword(OrganizationId, "kanban");
                     this.AddKeyword(OrganizationId, "collaboration");
                     this.AddKeyword(OrganizationId, "task management");
-
                 }
 
                 var keywords = distinctKeywordRepository.AsQueryable().ToList().Select(x => x.Key).ToList();
-
-                var keys = string.Empty;
-                foreach (var key in keywords)
+                foreach (var keyword in keywords)
                 {
-                    keys += string.Format("{0},", key);
-                }
+                    cancellationTokenSources.TryAdd(keyword, new CancellationTokenSource());
+                    var key = keyword;
+                    var task = new Task(
+                        () =>
+                        {
+                            var twitterContext = GetTwitterContext();
+                            this.RealTimeSearchTwitter(twitterContext, key);
+                        }, cancellationTokenSources[key].Token);
 
-                var twitterContext = GetTwitterContext();
-                this.RealTimeSearchTwitter(twitterContext, keys, keywords);
+                    task.Start();
+                }
 
                 return true;
             }
@@ -328,18 +361,77 @@
                     new SingleUserInMemoryCredentials
                     {
                         ConsumerKey =
-                            "onZSPzzGF2TbmcRFenWg",
+                            ConfigurationManager.AppSettings["twitterConsumerKey"],
                         ConsumerSecret =
-                            "06tif8gnaOnuCo0nziIoPETw0xpf2Ve2tgBOzQ",
+                            ConfigurationManager.AppSettings["twitterConsumerSecret"],
                         TwitterAccessToken =
-                            "18249700-hLL3tsmnE5yNVBxpjt080k4fimhC1R4YdRFFoLAuQ",
+                            ConfigurationManager.AppSettings["twitterTwitterAccessToken"],
                         TwitterAccessTokenSecret =
-                            "M2BXS5XBxD3ta5YknXjAeoZ44qZSJnXFLVKzEsdWlY"
+                            ConfigurationManager.AppSettings["twitterTwitterAccessTokenSecret"]
                     }
             };
             return new TwitterContext(auth);
         }
 
+        private void RealTimeSearchTwitter(TwitterContext twitterContext, string keyword)
+        {
+            if (!string.IsNullOrEmpty(keyword))
+            {
+                var streamItems =
+                twitterContext.Streaming.Where(x => x.Type == StreamingType.Filter && x.Track == keyword)
+                              .StreamingCallback(x =>
+                              {
+                                  if (x.Status == TwitterErrorStatus.Success)
+                                  {
+                                      try
+                                      {
+                                          dynamic obj = JsonConvert.DeserializeObject(x.Content);
+                                          if (obj != null
+                                              && obj.user != null)
+                                          {
+                                              string text = obj.text;
+                                              string userName = obj.user.screen_name;
+                                              string userImgUrl = obj.user.profile_image_url_https;
+                                              string statusId = obj.id_str;
+
+                                              var time = DateTime.ParseExact((string)obj.created_at, "ddd MMM dd HH:mm:ss zzz yyyy", CultureInfo.InvariantCulture);
+                                              string time2 = time.ToString("dd MMMM dddd - HH:mm", CultureInfo.InvariantCulture);
+
+                                              //find who you wil notify
+                                              var keywords = keywordRepository.AsQueryable().Where(y => y.Key == keyword);
+                                              foreach (var organizationKeyword in keywords)
+                                              {
+                                                  var orgKey = organizationKeyword;
+                                                  ThreadPool.QueueUserWorkItem(m => pusherServer.Trigger(string.Format("presence-{0}", orgKey.OrganizationId), "tweet_added",
+                                                      new { statusId, text, keyword, userName, userImgUrl, time2 }));
+                                              }
+
+                                              this.tweetRepository.Add(
+                                                  new Tweet
+                                                  {
+                                                      CreatedBy = "System",
+                                                      UpdatedBy = "System",
+                                                      TweetText = text,
+                                                      TweetStatusID = statusId,
+                                                      TwitterUserID = obj.user.id_str,
+                                                      TwitterUserImageUrl = userImgUrl,
+                                                      TwitterUserName = userName,
+                                                      CreatedAt = time,
+                                                      UpdatedAt = DateTime.Now,
+                                                      Keyword = keyword
+                                                  });
+
+                                          }
+                                      }
+                                      catch (Exception ex)
+                                      {
+                                          string a = ex.Message;
+
+                                      }
+                                  }
+                              }).SingleOrDefault();
+            }
+        }
 
         private void RealTimeSearchTwitter(TwitterContext twitterContext, string keyword, List<string> keys)
         {
