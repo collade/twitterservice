@@ -2,6 +2,9 @@
 {
     using System.Collections.Generic;
     using System.ServiceModel;
+    using System.Threading.Tasks;
+
+    using global::TwitterService.Business.Entities;
 
     [ServiceContract]
     public interface ITwitterService
@@ -29,5 +32,8 @@
 
         [OperationContract]
         List<string> GetKeywords(string organizationId);
+
+        [OperationContract]
+        Task<List<TweetDto>> GetTweetItems(string organizationId);
     }
 }

@@ -74,6 +74,12 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>GettingKeywords.feature</DependentUpon>
     </Compile>
+    <Compile Include="GettingTweets.cs" />
+    <Compile Include="GettingTweets.feature.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>GettingTweets.feature</DependentUpon>
+    </Compile>
     <Compile Include="RealtimeSearchSavedKeywords.cs" />
     <Compile Include="RealtimeSearchSavedKeywords.feature.cs">
       <AutoGen>True</AutoGen>
@@ -104,6 +110,10 @@
     <None Include="GettingKeywords.feature">
       <Generator>SpecFlowSingleFileGenerator</Generator>
       <LastGenOutput>GettingKeywords.feature.cs</LastGenOutput>
+    </None>
+    <None Include="GettingTweets.feature">
+      <Generator>SpecFlowSingleFileGenerator</Generator>
+      <LastGenOutput>GettingTweets.feature.cs</LastGenOutput>
     </None>
     <None Include="RealtimeSearchSavedKeywords.feature">
       <Generator>SpecFlowSingleFileGenerator</Generator>

@@ -232,7 +232,7 @@
                     this.AddKeyword(OrganizationId, "kanban");
                     this.AddKeyword(OrganizationId, "collaboration");
                     this.AddKeyword(OrganizationId, "task management");
-      
+
                 }
 
                 var keywords = distinctKeywordRepository.AsQueryable().ToList().Select(x => x.Key).ToList();
@@ -277,6 +277,46 @@
             }
 
             return new List<string>();
+        }
+
+        public Task<List<TweetDto>> GetTweetItems(string organizationId)
+        {
+            var result = new List<TweetDto>();
+
+            if (string.IsNullOrEmpty(organizationId))
+            {
+                return Task.FromResult(result);
+            }
+
+            if (!HasOrganization(organizationId))
+            {
+                return Task.FromResult(result);
+            }
+
+            var keywords = this.GetKeywords(organizationId);
+            foreach (var keyword in keywords)
+            {
+                if (tweetRepository.AsQueryable().Any(x => x.Keyword == keyword))
+                {
+                    string key = keyword;
+                    var items = tweetRepository.AsOrderedQueryable().Where(x => x.Keyword == key).Take(100).ToList();
+                    foreach (var item in items)
+                    {
+                        result.Add(new TweetDto
+                        {
+                            Link = string.Format("https://twitter.com/{0}/status/{1}", item.TwitterUserName, item.TweetStatusID),
+                            Time = item.CreatedAt.ToString("dd MMMM dddd - HH:mm", CultureInfo.InvariantCulture),
+                            Tag = key,
+                            StatusID = item.TweetStatusID,
+                            Text = item.TweetText,
+                            UserImageUrl = item.TwitterUserImageUrl,
+                            UserName = item.TwitterUserName
+                        });
+                    }
+                }
+            }
+
+            return Task.FromResult(result);
         }
 
         private static TwitterContext GetTwitterContext()
